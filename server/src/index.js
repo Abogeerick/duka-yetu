@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 
 import productRoutes from './routes/products.js';
@@ -9,14 +9,12 @@ import mpesaRoutes from './routes/mpesa.js';
 import uploadRoutes from './routes/upload.js';
 import authRoutes from './routes/auth.js';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'http://localhost:5175',
   credentials: true,
 }));
 app.use(express.json());
