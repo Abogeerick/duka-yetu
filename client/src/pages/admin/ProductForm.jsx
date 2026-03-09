@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../config/api';
 
 const CATEGORIES = ['dresses', 'maxi', 'mini', 'gowns', 'two-piece', 'jumpsuits'];
 const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const PRESET_COLORS = [
+  { name: 'Black', hex: '#1a1a1a' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Red', hex: '#8B0000' },
+  { name: 'Burgundy', hex: '#800020' },
+  { name: 'Emerald', hex: '#004D40' },
+  { name: 'Navy', hex: '#1B2A4A' },
+  { name: 'Gold', hex: '#D4AF37' },
+  { name: 'Cream', hex: '#F5F5DC' },
+  { name: 'Rose', hex: '#B76E79' },
+  { name: 'Olive', hex: '#556B2F' },
+];
 
 export default function AdminProductForm() {
   const { id } = useParams();
@@ -51,6 +64,16 @@ export default function AdminProductForm() {
       ...prev,
       sizes: prev.sizes.includes(size) ? prev.sizes.filter((s) => s !== size) : [...prev.sizes, size],
     }));
+  };
+
+  const toggleColor = (color) => {
+    setForm((prev) => {
+      const exists = prev.colors.find(c => c.name === color.name);
+      if (exists) {
+        return { ...prev, colors: prev.colors.filter(c => c.name !== color.name) };
+      }
+      return { ...prev, colors: [...prev.colors, color] };
+    });
   };
 
   const handleImageUpload = async (e) => {
@@ -106,27 +129,34 @@ export default function AdminProductForm() {
   if (!isAdmin) return null;
 
   return (
-    <div className="admin-page">
+    <motion.div
+      className="admin-page"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <button className="back-link" onClick={() => navigate('/admin/products')}>← Back to Products</button>
-      <h2 className="section-title" style={{ textAlign: 'left', fontSize: 24, marginBottom: 32 }}>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 400, letterSpacing: 3, marginBottom: 32 }}>
         {isEdit ? 'Edit Product' : 'Add New Product'}
       </h2>
 
       <form className="product-form" onSubmit={handleSubmit}>
+        {/* Basic Info */}
         <div className="form-group">
           <span className="label">Product Name *</span>
-          <input className="input" name="name" value={form.name} onChange={handleChange} required />
+          <input className="input" name="name" value={form.name} onChange={handleChange} required placeholder="e.g. Midnight Muse Mini" />
         </div>
 
         <div className="form-group">
           <span className="label">Description</span>
-          <textarea name="description" value={form.description} onChange={handleChange} style={{ width: '100%', padding: 14, border: '1px solid #ddd', minHeight: 120, fontSize: 14, resize: 'vertical' }} />
+          <textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe the product..." />
         </div>
 
+        {/* Pricing & Category */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div className="form-group">
             <span className="label">Price (KES) *</span>
-            <input className="input" name="price" type="number" value={form.price} onChange={handleChange} required />
+            <input className="input" name="price" type="number" value={form.price} onChange={handleChange} required placeholder="4000" />
           </div>
           <div className="form-group">
             <span className="label">Compare Price (KES)</span>
@@ -137,74 +167,126 @@ export default function AdminProductForm() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div className="form-group">
             <span className="label">Category *</span>
-            <select className="input" name="category" value={form.category} onChange={handleChange} style={{ background: '#fff' }}>
+            <select name="category" value={form.category} onChange={handleChange}>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <span className="label">Stock</span>
-            <input className="input" name="stock" type="number" value={form.stock} onChange={handleChange} />
+            <span className="label">Stock Quantity</span>
+            <input className="input" name="stock" type="number" value={form.stock} onChange={handleChange} placeholder="10" />
           </div>
         </div>
 
+        {/* Sizes */}
         <div className="form-group">
-          <span className="label">Sizes</span>
+          <span className="label">Available Sizes</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {ALL_SIZES.map((s) => (
-              <button
+              <motion.button
                 key={s}
                 type="button"
                 className={`size-btn ${form.sizes.includes(s) ? 'active' : ''}`}
                 onClick={() => toggleSize(s)}
-              >{s}</button>
+                whileTap={{ scale: 0.95 }}
+              >
+                {s}
+              </motion.button>
             ))}
           </div>
         </div>
 
+        {/* Colors */}
+        <div className="form-group">
+          <span className="label">Colors ({form.colors.length} selected)</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {PRESET_COLORS.map((c) => (
+              <motion.div
+                key={c.name}
+                className={`color-dot ${form.colors.find(fc => fc.name === c.name) ? 'active' : ''}`}
+                style={{ background: c.hex, border: c.hex === '#FFFFFF' ? '2px solid #ddd' : '2px solid transparent' }}
+                onClick={() => toggleColor(c)}
+                title={c.name}
+                whileTap={{ scale: 0.9 }}
+              />
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 8 }}>
+            Selected: {form.colors.map(c => c.name).join(', ') || 'None'}
+          </div>
+        </div>
+
+        {/* Badge */}
         <div className="form-group">
           <span className="label">Badge</span>
-          <select className="input" name="badge" value={form.badge} onChange={handleChange} style={{ background: '#fff' }}>
+          <select name="badge" value={form.badge} onChange={handleChange}>
             <option value="">None</option>
             <option value="NEW">NEW</option>
             <option value="SALE">SALE</option>
           </select>
         </div>
 
+        {/* Images */}
         <div className="form-group">
-          <span className="label">Images</span>
+          <span className="label">Images ({form.images.length})</span>
           <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-          {uploading && <p style={{ fontSize: 12, color: '#666', marginTop: 8 }}>Uploading...</p>}
-          <div className="image-preview">
-            {form.images.map((url, idx) => (
-              <div key={idx} style={{ position: 'relative' }}>
-                <img src={url} alt="" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: '#fff', border: 'none', borderRadius: '50%', width: 20, height: 20, fontSize: 12, cursor: 'pointer' }}
-                >×</button>
-              </div>
-            ))}
-          </div>
+          {uploading && <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 8 }}>Uploading...</p>}
+          {form.images.length > 0 && (
+            <div className="image-preview">
+              {form.images.map((url, idx) => (
+                <div key={idx} style={{ position: 'relative' }}>
+                  <img src={url} alt="" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    style={{ position: 'absolute', top: 4, right: 4, background: 'var(--color-accent)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >×</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="form-group" style={{ display: 'flex', gap: 24 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+        {/* Publish & Feature */}
+        <div className="form-group" style={{ display: 'flex', gap: 32, padding: '16px 0' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
             <input type="checkbox" name="is_published" checked={form.is_published} onChange={handleChange} />
             Published
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
             <input type="checkbox" name="is_featured" checked={form.is_featured} onChange={handleChange} />
-            Featured
+            Featured on Homepage
           </label>
         </div>
 
-        {error && <p style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+        {error && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 12 }}
+          >
+            {error}
+          </motion.p>
+        )}
 
-        <button className="btn-primary" type="submit" disabled={saving}>
-          {saving ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <motion.button
+            className="btn-primary"
+            type="submit"
+            disabled={saving}
+            whileTap={{ scale: 0.98 }}
+            style={{ flex: 1 }}
+          >
+            {saving ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}
+          </motion.button>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => navigate('/admin/products')}
+          >
+            Cancel
+          </button>
+        </div>
       </form>
-    </div>
+    </motion.div>
   );
 }

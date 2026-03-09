@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../config/api';
 import ProductCard from '../components/ProductCard';
 
@@ -15,7 +16,7 @@ export default function Shop() {
 
   useEffect(() => {
     setLoading(true);
-    const params = {};
+    const params = { limit: 50 };
     if (activeCat !== 'all') params.category = activeCat;
     if (search) params.search = search;
 
@@ -26,7 +27,11 @@ export default function Shop() {
   }, [activeCat, search]);
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
       <nav className="cat-nav">
         {CATEGORIES.map((cat) => (
           <button
@@ -40,31 +45,69 @@ export default function Shop() {
       </nav>
 
       <div className="section">
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 40, maxWidth: 440, margin: '0 auto 40px' }}>
           <input
             className="input"
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ maxWidth: 400, margin: '0 auto', display: 'block' }}
+            style={{ textAlign: 'center' }}
           />
         </div>
 
-        <h2 className="section-title">
+        <motion.h2
+          className="section-title"
+          key={activeCat}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
           {activeCat === 'all' ? 'All Products' : activeCat.replace('-', ' ')}
-        </h2>
+        </motion.h2>
         <div className="section-line" />
 
-        {loading ? (
-          <p className="empty-state">Loading...</p>
-        ) : products.length === 0 ? (
-          <p className="empty-state">No products found</p>
-        ) : (
-          <div className="product-grid">
-            {products.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              className="product-grid"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              {[...Array(8)].map((_, i) => (
+                <div key={i}>
+                  <div className="skeleton" style={{ aspectRatio: '3/4', marginBottom: 12 }} />
+                  <div className="skeleton" style={{ height: 16, width: '70%', marginBottom: 8 }} />
+                  <div className="skeleton" style={{ height: 14, width: '40%' }} />
+                </div>
+              ))}
+            </motion.div>
+          ) : products.length === 0 ? (
+            <motion.p
+              key="empty"
+              className="empty-state"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              No products found
+            </motion.p>
+          ) : (
+            <motion.div
+              key={activeCat + search}
+              className="product-grid"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {products.map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </>
+    </motion.div>
   );
 }

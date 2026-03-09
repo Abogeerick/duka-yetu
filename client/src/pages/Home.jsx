@@ -1,44 +1,188 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import api from '../config/api';
 import ProductCard from '../components/ProductCard';
 
+const HERO_BG = 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1400&q=80';
+
+const CATEGORIES = [
+  { name: 'Dresses', path: '/shop/dresses', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80' },
+  { name: 'Gowns', path: '/shop/gowns', image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80' },
+  { name: 'Two Piece', path: '/shop/two-piece', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600&q=80' },
+];
+
 export default function Home() {
   const [featured, setFeatured] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/products', { params: { featured: true, limit: 8 } })
-      .then(({ data }) => setFeatured(data.products))
+    Promise.all([
+      api.get('/products', { params: { featured: true, limit: 8 } }),
+      api.get('/products', { params: { badge: 'NEW', limit: 4 } }),
+    ])
+      .then(([featuredRes, newRes]) => {
+        setFeatured(featuredRes.data.products);
+        setNewArrivals(newRes.data.products);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <>
+      {/* ── Hero Section ── */}
       <div className="hero">
-        <div className="hero-bg" />
+        <motion.div
+          className="hero-bg"
+          style={{ backgroundImage: `url(${HERO_BG})`, opacity: 0.4 }}
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.5, ease: 'easeOut' }}
+        />
+        <div className="hero-overlay" />
         <div className="hero-content">
-          <h1>Fashion That<br />Moves</h1>
-          <p>Contemporary Women&apos;s Fashion — Nairobi</p>
-          <Link to="/shop" className="btn-hero">Shop Collection</Link>
+          <motion.p
+            className="hero-subtitle"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 0.85, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Contemporary Women&apos;s Fashion — Nairobi
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            Fashion That<br /><em>Moves</em>
+          </motion.h1>
+          <motion.div
+            className="hero-cta-group"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            <Link to="/shop" className="btn-hero-fill">Shop Collection</Link>
+            <Link to="/shop/gowns" className="btn-hero">View Gowns</Link>
+          </motion.div>
         </div>
       </div>
 
-      <div className="section">
-        <h2 className="section-title">Our Collection</h2>
-        <div className="section-line" />
-        {loading ? (
-          <p className="empty-state">Loading...</p>
-        ) : (
-          <div className="product-grid">
-            {featured.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
-        )}
-        <div className="text-center mt-4">
-          <Link to="/shop" className="btn-outline">View All Products</Link>
+      {/* ── Promo Marquee ── */}
+      <div className="promo-banner">
+        <div className="promo-track">
+          {[...Array(2)].map((_, i) => (
+            <span key={i}>
+              Free Nairobi Delivery&nbsp;&nbsp;★&nbsp;&nbsp;
+              M-Pesa Payments&nbsp;&nbsp;★&nbsp;&nbsp;
+              7 Day Returns&nbsp;&nbsp;★&nbsp;&nbsp;
+              Same Day Dispatch&nbsp;&nbsp;★&nbsp;&nbsp;
+              Free Nairobi Delivery&nbsp;&nbsp;★&nbsp;&nbsp;
+              M-Pesa Payments&nbsp;&nbsp;★&nbsp;&nbsp;
+              7 Day Returns&nbsp;&nbsp;★&nbsp;&nbsp;
+              Same Day Dispatch&nbsp;&nbsp;★&nbsp;&nbsp;
+            </span>
+          ))}
         </div>
       </div>
+
+      {/* ── Featured Collection ── */}
+      <div className="section">
+        <motion.h2
+          className="section-title"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          Our Collection
+        </motion.h2>
+        <motion.div
+          className="section-line"
+          initial={{ width: 0 }}
+          whileInView={{ width: 48 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        />
+
+        {loading ? (
+          <div className="product-grid">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <div className="skeleton" style={{ aspectRatio: '3/4', marginBottom: 12 }} />
+                <div className="skeleton" style={{ height: 16, width: '70%', marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 14, width: '40%' }} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="product-grid">
+            {featured.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+        )}
+
+        <motion.div
+          className="text-center mt-4"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+        >
+          <Link to="/shop" className="btn-outline">View All Products</Link>
+        </motion.div>
+      </div>
+
+      {/* ── Category Banners ── */}
+      <div className="category-grid" style={{ marginBottom: 80 }}>
+        {CATEGORIES.map((cat, i) => (
+          <motion.div
+            key={cat.name}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: i * 0.15 }}
+          >
+            <Link to={cat.path} className="category-card">
+              <img src={cat.image} alt={cat.name} loading="lazy" />
+              <div className="overlay">
+                <h3>{cat.name}</h3>
+                <span>Shop Now →</span>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── New Arrivals ── */}
+      {newArrivals.length > 0 && (
+        <div className="section" style={{ paddingTop: 0 }}>
+          <motion.h2
+            className="section-title"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            New Arrivals
+          </motion.h2>
+          <motion.div
+            className="section-line"
+            initial={{ width: 0 }}
+            whileInView={{ width: 48 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          />
+          <div className="product-grid">
+            {newArrivals.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

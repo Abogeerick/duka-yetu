@@ -60,12 +60,24 @@ router.post('/', async (req, res) => {
 
     if (itemsError) throw itemsError;
 
-    // Decrement stock
+    // Decrement stock (non-blocking — don't fail the order if this errors)
     for (const item of items) {
-      await supabaseAdmin.rpc('decrement_stock', {
-        product_id: item.product_id,
-        qty: item.quantity,
-      }).catch(() => {}); // Non-blocking
+      try {
+        const { data: product } = await supabaseAdmin
+          .from('products')
+          .select('stock')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product) {
+          await supabaseAdmin
+            .from('products')
+            .update({ stock: Math.max(0, product.stock - item.quantity) })
+            .eq('id', item.product_id);
+        }
+      } catch (stockErr) {
+        console.warn('Stock update failed (non-blocking):', stockErr.message);
+      }
     }
 
     res.status(201).json(order);

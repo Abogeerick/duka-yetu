@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../config/api';
 
 const formatKES = (n) => `KSh ${n.toLocaleString()}`;
@@ -11,7 +12,6 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
   const [orderNumber, setOrderNumber] = useState('');
   const pollRef = useRef(null);
 
-  // Clean up polling on unmount
   useEffect(() => {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
@@ -33,7 +33,6 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
 
       setStatus('pending');
 
-      // Poll for payment status every 3 seconds
       let attempts = 0;
       pollRef.current = setInterval(async () => {
         attempts++;
@@ -51,9 +50,8 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
             setStatus('failed');
             setError(result.resultDesc || 'Payment was not completed');
           }
-        } catch {}
+        } catch { }
 
-        // Stop polling after 60 seconds
         if (attempts >= 20) {
           clearInterval(pollRef.current);
           if (status === 'pending') {
@@ -71,35 +69,95 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
 
   if (status === 'success') {
     return (
-      <div className="payment-success">
-        <div style={{ fontSize: 56, marginBottom: 16, color: 'var(--color-success)' }}>✓</div>
-        <h3 style={{ color: 'var(--color-success)', marginBottom: 8 }}>Payment Successful!</h3>
-        {receipt && <p style={{ color: '#666', fontSize: 13, marginBottom: 4 }}>M-Pesa Receipt: <strong>{receipt}</strong></p>}
-        {orderNumber && <p style={{ color: '#666', fontSize: 13 }}>Order: <strong>{orderNumber}</strong></p>}
-        <p style={{ color: '#666', fontSize: 13, marginTop: 12 }}>
-          You will receive an SMS confirmation shortly.
-        </p>
-      </div>
+      <motion.div
+        className="payment-success"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', damping: 20 }}
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
+          style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--color-success-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}
+        >
+          <span style={{ fontSize: 40, color: 'var(--color-success)' }}>✓</span>
+        </motion.div>
+        <motion.h3
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          style={{ color: 'var(--color-success)', marginBottom: 12, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 400, letterSpacing: 2 }}
+        >
+          Payment Successful!
+        </motion.h3>
+        {receipt && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ color: 'var(--color-muted)', fontSize: 13, marginBottom: 4 }}>
+            M-Pesa Receipt: <strong style={{ color: 'var(--color-text)' }}>{receipt}</strong>
+          </motion.p>
+        )}
+        {orderNumber && (
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} style={{ color: 'var(--color-muted)', fontSize: 13 }}>
+            Order: <strong style={{ color: 'var(--color-text)' }}>{orderNumber}</strong>
+          </motion.p>
+        )}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          style={{ color: 'var(--color-muted)', fontSize: 13, marginTop: 16 }}
+        >
+          You will receive an SMS confirmation shortly. Redirecting...
+        </motion.p>
+      </motion.div>
     );
   }
 
   if (status === 'pending') {
     return (
-      <div className="payment-pending">
+      <motion.div
+        className="payment-pending"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
         <div className="spinner" />
-        <h3 style={{ fontSize: 14, fontWeight: 600 }}>Waiting for M-Pesa confirmation...</h3>
-        <p style={{ color: '#666', fontSize: 12, marginTop: 8 }}>Check your phone and enter your PIN</p>
-      </div>
+        <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: 1 }}>
+          Waiting for M-Pesa confirmation...
+        </h3>
+        <p style={{ color: 'var(--color-muted)', fontSize: 13, marginTop: 8 }}>
+          Check your phone and enter your M-Pesa PIN
+        </p>
+        <motion.div
+          style={{ marginTop: 24, display: 'flex', gap: 4, justifyContent: 'center' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-success)' }}
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }}
+            />
+          ))}
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="mpesa-box">
+    <motion.div
+      className="mpesa-box"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="mpesa-logo">
         <div className="mpesa-icon">M</div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 15 }}>Lipa na M-Pesa</div>
-          <div style={{ fontSize: 11, color: '#666' }}>STK Push — Enter PIN on your phone</div>
+          <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>STK Push — Enter PIN on your phone</div>
         </div>
       </div>
 
@@ -111,20 +169,32 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
         onChange={(e) => setPhone(e.target.value)}
       />
 
-      {error && <p style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 12 }}
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
 
-      <p style={{ fontSize: 12, color: '#666', lineHeight: 1.6, marginBottom: 16 }}>
+      <p style={{ fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.8, marginBottom: 16 }}>
         You will receive an STK push prompt on your phone.
-        Enter your M-Pesa PIN to complete payment of <strong>{formatKES(amount)}</strong>.
+        Enter your M-Pesa PIN to complete payment of <strong style={{ color: 'var(--color-text)' }}>{formatKES(amount)}</strong>.
       </p>
 
-      <button
+      <motion.button
         className="btn-primary btn-mpesa"
         onClick={initiatePayment}
         disabled={status === 'pushing'}
+        whileTap={{ scale: 0.98 }}
       >
         {status === 'pushing' ? 'Sending STK Push...' : `Pay ${formatKES(amount)} via M-Pesa`}
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
 }
