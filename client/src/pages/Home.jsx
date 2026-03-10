@@ -4,8 +4,6 @@ import { motion } from 'framer-motion';
 import api from '../config/api';
 import ProductCard from '../components/ProductCard';
 
-const HERO_BG = 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1400&q=80';
-
 const CATEGORIES = [
   { name: 'Dresses', path: '/shop/dresses', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80' },
   { name: 'Gowns', path: '/shop/gowns', image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&q=80' },
@@ -32,37 +30,45 @@ export default function Home() {
 
   return (
     <>
-      {/* ── Hero Section ── */}
+      {/* ── Hero Section — Full Screen Runway ── */}
       <div className="hero">
         <motion.div
           className="hero-bg"
-          style={{ backgroundImage: `url(${HERO_BG})`, opacity: 0.4 }}
+          style={{ backgroundImage: 'url(/images/hero-runway.png)' }}
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 1.5, ease: 'easeOut' }}
+          transition={{ duration: 2, ease: 'easeOut' }}
         />
         <div className="hero-overlay" />
         <div className="hero-content">
           <motion.p
             className="hero-subtitle"
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 0.85, y: 0 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Contemporary Women&apos;s Fashion — Nairobi
+            Contemporary African Fashion
           </motion.p>
-          <motion.h1
+          <motion.div
+            className="hero-brand"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
+            transition={{ duration: 1, delay: 0.5 }}
           >
-            Fashion That<br /><em>Moves</em>
+            Akin Styles
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            Where Elegance<br />Meets <em>Culture</em>
           </motion.h1>
           <motion.div
             className="hero-cta-group"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
           >
             <Link to="/shop" className="btn-hero-fill">Shop Collection</Link>
             <Link to="/shop/gowns" className="btn-hero">View Gowns</Link>
@@ -75,17 +81,49 @@ export default function Home() {
         <div className="promo-track">
           {[...Array(2)].map((_, i) => (
             <span key={i}>
-              Free Nairobi Delivery&nbsp;&nbsp;★&nbsp;&nbsp;
-              M-Pesa Payments&nbsp;&nbsp;★&nbsp;&nbsp;
-              7 Day Returns&nbsp;&nbsp;★&nbsp;&nbsp;
-              Same Day Dispatch&nbsp;&nbsp;★&nbsp;&nbsp;
-              Free Nairobi Delivery&nbsp;&nbsp;★&nbsp;&nbsp;
-              M-Pesa Payments&nbsp;&nbsp;★&nbsp;&nbsp;
-              7 Day Returns&nbsp;&nbsp;★&nbsp;&nbsp;
-              Same Day Dispatch&nbsp;&nbsp;★&nbsp;&nbsp;
+              Free Nairobi Delivery&nbsp;&nbsp;✦&nbsp;&nbsp;
+              M-Pesa Payments&nbsp;&nbsp;✦&nbsp;&nbsp;
+              7 Day Returns&nbsp;&nbsp;✦&nbsp;&nbsp;
+              Same Day Dispatch&nbsp;&nbsp;✦&nbsp;&nbsp;
+              Handpicked Collections&nbsp;&nbsp;✦&nbsp;&nbsp;
+              Free Nairobi Delivery&nbsp;&nbsp;✦&nbsp;&nbsp;
+              M-Pesa Payments&nbsp;&nbsp;✦&nbsp;&nbsp;
+              7 Day Returns&nbsp;&nbsp;✦&nbsp;&nbsp;
             </span>
           ))}
         </div>
+      </div>
+
+      {/* ── Split Hero — Editorial Shot ── */}
+      <div className="hero-split">
+        <motion.div
+          className="hero-split-img"
+          initial={{ opacity: 0, x: -30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <img src="/images/hero-editorial.png" alt="Akin Styles editorial" />
+        </motion.div>
+        <motion.div
+          className="hero-split-content"
+          initial={{ opacity: 0, x: 30 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.1 }}
+        >
+          <p className="hero-subtitle" style={{ color: 'var(--color-gold)', textAlign: 'left', marginBottom: 16 }}>
+            New Season
+          </p>
+          <h2>Made for the Modern African Woman</h2>
+          <p>
+            Every piece in our collection is carefully curated to celebrate confidence,
+            culture, and contemporary style. From Nairobi runways to your wardrobe.
+          </p>
+          <Link to="/shop" className="btn-outline" style={{ alignSelf: 'flex-start' }}>
+            Explore Collection
+          </Link>
+        </motion.div>
       </div>
 
       {/* ── Featured Collection ── */}

@@ -51,7 +51,7 @@ export default function Login() {
           <h2>{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
           <p className="subtitle">
             {isRegister
-              ? 'Join Duka Yetu for exclusive offers and faster checkout'
+              ? 'Join Akin Styles for exclusive offers and faster checkout'
               : 'Sign in to your account to continue'}
           </p>
 

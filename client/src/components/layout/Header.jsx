@@ -43,7 +43,7 @@ export default function Header() {
         transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
       >
         <div className="header-left">
-          <Link to="/" className="logo">Duka Yetu</Link>
+          <Link to="/" className="logo">Akin Styles</Link>
           <nav className="nav-links">
             {navItems.map((item) => (
               <Link

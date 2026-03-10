@@ -37,9 +37,9 @@ export default function Footer() {
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-brand">
-            <div className="logo-footer">Duka Yetu</div>
+            <div className="logo-footer">Akin Styles</div>
             <p>
-              Contemporary women&apos;s fashion, handpicked for the modern Kenyan woman.
+              Contemporary African fashion, handpicked for the modern woman.
               Nairobi-based, shipping nationwide and worldwide.
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          © {new Date().getFullYear()} Duka Yetu. All rights reserved.&nbsp;•&nbsp;Powered by M-Pesa
+          © {new Date().getFullYear()} Akin Styles. All rights reserved.&nbsp;•&nbsp;Powered by M-Pesa
         </div>
       </footer>
     </>
