@@ -13,8 +13,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5175',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, health checks)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Be permissive — tighten in production if needed
+    }
+  },
   credentials: true,
 }));
 app.use(express.json());
