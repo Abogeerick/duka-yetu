@@ -1574,6 +1574,10 @@ select {
     gap: 32px;
   }
 
+  .detail-images {
+    position: static;
+  }
+
   .category-grid {
     grid-template-columns: 1fr;
   }

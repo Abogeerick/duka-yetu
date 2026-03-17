@@ -15,6 +15,7 @@ router.get('/', async (req, res) => {
       .from('products')
       .select('*', { count: 'exact' })
       .eq('is_published', true)
+      .or('is_archived.eq.false,is_archived.is.null')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -46,6 +47,7 @@ router.get('/:slug', async (req, res) => {
       .select('*')
       .eq('slug', req.params.slug)
       .eq('is_published', true)
+      .or('is_archived.eq.false,is_archived.is.null')
       .single();
 
     if (error || !data) return res.status(404).json({ error: 'Product not found' });

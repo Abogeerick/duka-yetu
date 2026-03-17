@@ -10,7 +10,7 @@ export default function AdminProducts() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
-  const [filter, setFilter] = useState('all'); // all, published, draft
+  const [filter, setFilter] = useState('all'); // all, published, draft, archived
 
   useEffect(() => {
     if (!isAdmin) { navigate('/login'); return; }
@@ -22,12 +22,24 @@ export default function AdminProducts() {
   };
 
   const deleteProduct = async (id, name) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    if (!confirm(`Are you sure you want to completely delete "${name}"? This will fail if it's tied to an order.`)) return;
     try {
       await api.delete(`/products/${id}`);
       loadProducts();
     } catch (err) {
-      alert('Failed to delete product');
+      alert('Failed to delete product. It might be tied to an order. Consider archiving it instead.');
+    }
+  };
+
+  const archiveProduct = async (product) => {
+    const isArchiving = !product.is_archived;
+    if (isArchiving && !confirm(`Archive "${product.name}"? It will no longer appear in the shop.`)) return;
+    
+    try {
+      await api.put(`/products/${product.id}`, { is_archived: isArchiving });
+      loadProducts();
+    } catch (err) {
+      alert('Failed to update archive status');
     }
   };
 
@@ -40,11 +52,17 @@ export default function AdminProducts() {
     }
   };
 
-  const filtered = filter === 'all'
-    ? products
-    : filter === 'published'
-      ? products.filter(p => p.is_published)
-      : products.filter(p => !p.is_published);
+  const filtered = products.filter(p => {
+    if (filter === 'all') return !p.is_archived;
+    if (filter === 'archived') return p.is_archived;
+    
+    // For published and draft, also filter out archived
+    if (p.is_archived) return false;
+    if (filter === 'published') return p.is_published;
+    if (filter === 'draft') return !p.is_published;
+    
+    return true;
+  });
 
   if (!isAdmin) return null;
 
@@ -61,14 +79,19 @@ export default function AdminProducts() {
             Products ({products.length})
           </h2>
           <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            {['all', 'published', 'draft'].map(f => (
+            {['all', 'published', 'draft', 'archived'].map(f => (
               <button
                 key={f}
                 className="btn-outline"
                 onClick={() => setFilter(f)}
                 style={filter === f ? { background: 'var(--color-text)', color: '#fff', borderColor: 'var(--color-text)' } : { padding: '6px 16px', fontSize: 10 }}
               >
-                {f} ({f === 'all' ? products.length : f === 'published' ? products.filter(p => p.is_published).length : products.filter(p => !p.is_published).length})
+                {f} ({
+                  f === 'all' ? products.filter(p => !p.is_archived).length :
+                  f === 'archived' ? products.filter(p => p.is_archived).length :
+                  f === 'published' ? products.filter(p => p.is_published && !p.is_archived).length :
+                  products.filter(p => !p.is_published && !p.is_archived).length
+                })
               </button>
             ))}
           </div>
@@ -120,18 +143,29 @@ export default function AdminProducts() {
                 <button
                   onClick={() => togglePublish(p)}
                   className={`status-badge ${p.is_published ? 'paid' : 'pending'}`}
-                  style={{ border: 'none', cursor: 'pointer' }}
+                  style={{ border: 'none', cursor: 'pointer', opacity: p.is_archived ? 0.5 : 1 }}
                   title={`Click to ${p.is_published ? 'unpublish' : 'publish'}`}
+                  disabled={p.is_archived}
                 >
                   {p.is_published ? 'Published' : 'Draft'}
                 </button>
+                {p.is_archived && (
+                  <div style={{ fontSize: 10, color: 'var(--color-accent)', marginTop: 4, fontWeight: 600 }}>Archived</div>
+                )}
               </td>
               <td>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   <Link to={`/admin/products/${p.id}`} style={{ fontSize: 12, color: '#0066cc', fontWeight: 500 }}>Edit</Link>
+                  <button
+                    onClick={() => archiveProduct(p)}
+                    style={{ border: 'none', background: 'none', fontSize: 12, color: p.is_archived ? '#2D6A4F' : '#E65100', cursor: 'pointer', fontWeight: 500 }}
+                  >
+                    {p.is_archived ? 'Restore' : 'Archive'}
+                  </button>
                   <button
                     onClick={() => deleteProduct(p.id, p.name)}
                     style={{ border: 'none', background: 'none', fontSize: 12, color: 'var(--color-accent)', cursor: 'pointer', fontWeight: 500 }}
+                    title="Permanently Delete"
                   >
                     Delete
                   </button>
