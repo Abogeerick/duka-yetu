@@ -61,7 +61,7 @@ export async function initiateSTKPush(phone, amount, accountRef) {
     TransactionType: 'CustomerBuyGoodsOnline',
     Amount: Math.round(amount),
     PartyA: phone,
-    PartyB: process.env.MPESA_SHORTCODE,
+    PartyB: process.env.MPESA_TILL_NUMBER || process.env.MPESA_SHORTCODE,
     PhoneNumber: phone,
     CallBackURL: process.env.MPESA_CALLBACK_URL,
     AccountReference: accountRef,
