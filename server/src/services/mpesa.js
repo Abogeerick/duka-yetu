@@ -58,7 +58,7 @@ export async function initiateSTKPush(phone, amount, accountRef) {
     BusinessShortCode: process.env.MPESA_SHORTCODE,
     Password: password,
     Timestamp: timestamp,
-    TransactionType: 'CustomerPayBillOnline',
+    TransactionType: 'CustomerBuyGoodsOnline',
     Amount: Math.round(amount),
     PartyA: phone,
     PartyB: process.env.MPESA_SHORTCODE,

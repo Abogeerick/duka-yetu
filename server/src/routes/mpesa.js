@@ -193,27 +193,121 @@ router.post('/callback', async (req, res) => {
 /**
  * GET /api/mpesa/status/:checkoutRequestId
  * Frontend polls this to check payment status
+ * If still pending, actively queries Safaricom for the result
  */
 router.get('/status/:checkoutRequestId', async (req, res) => {
   try {
+    const checkoutId = req.params.checkoutRequestId;
+
     const { data: payment, error } = await supabaseAdmin
       .from('payments')
       .select('*, orders(order_number, status)')
-      .eq('checkout_request_id', req.params.checkoutRequestId)
+      .eq('checkout_request_id', checkoutId)
       .single();
 
     if (error || !payment) {
       return res.status(404).json({ error: 'Payment not found' });
     }
 
+    // If payment already completed/failed via callback, return immediately
+    if (payment.status !== 'pending') {
+      return res.json({
+        status: payment.status,
+        mpesaReceipt: payment.mpesa_receipt,
+        resultDesc: payment.result_desc,
+        orderStatus: payment.orders?.status,
+        orderNumber: payment.orders?.order_number,
+      });
+    }
+
+    // Payment still pending — actively query Safaricom
+    // Skip query for demo mode payments
+    if (checkoutId.startsWith('DEMO-')) {
+      return res.json({
+        status: payment.status,
+        mpesaReceipt: null,
+        resultDesc: 'Waiting for payment...',
+        orderStatus: payment.orders?.status,
+        orderNumber: payment.orders?.order_number,
+      });
+    }
+
+    try {
+      const queryResult = await querySTKStatus(checkoutId);
+      console.log('STK Query result:', JSON.stringify(queryResult));
+
+      const resultCode = Number(queryResult.ResultCode);
+
+      if (resultCode === 0) {
+        // Payment succeeded — update DB
+        const receipt = queryResult.ResultDesc?.match(/Receipt Number: (\w+)/)?.[1] || null;
+
+        await supabaseAdmin
+          .from('payments')
+          .update({
+            status: 'completed',
+            result_code: resultCode,
+            result_desc: queryResult.ResultDesc,
+            mpesa_receipt: receipt,
+          })
+          .eq('id', payment.id);
+
+        await supabaseAdmin
+          .from('orders')
+          .update({ status: 'paid' })
+          .eq('id', payment.order_id);
+
+        return res.json({
+          status: 'completed',
+          mpesaReceipt: receipt,
+          resultDesc: queryResult.ResultDesc,
+          orderStatus: 'paid',
+          orderNumber: payment.orders?.order_number,
+        });
+      } else if (resultCode === 1032) {
+        // User cancelled
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed', result_code: resultCode, result_desc: 'Transaction cancelled by user' })
+          .eq('id', payment.id);
+
+        return res.json({
+          status: 'failed',
+          mpesaReceipt: null,
+          resultDesc: 'Transaction cancelled by user',
+          orderStatus: payment.orders?.status,
+          orderNumber: payment.orders?.order_number,
+        });
+      } else if (resultCode === 1037 || resultCode === 1) {
+        // Timeout or failed
+        await supabaseAdmin
+          .from('payments')
+          .update({ status: 'failed', result_code: resultCode, result_desc: queryResult.ResultDesc })
+          .eq('id', payment.id);
+
+        return res.json({
+          status: 'failed',
+          mpesaReceipt: null,
+          resultDesc: queryResult.ResultDesc || 'Payment timed out. Please try again.',
+          orderStatus: payment.orders?.status,
+          orderNumber: payment.orders?.order_number,
+        });
+      }
+    } catch (queryErr) {
+      // Query failed (maybe too early) — just return pending
+      console.log('STK query not ready yet:', queryErr.response?.data?.errorMessage || queryErr.message);
+    }
+
+    // Still pending
     res.json({
-      status: payment.status,
-      mpesaReceipt: payment.mpesa_receipt,
-      resultDesc: payment.result_desc,
+      status: 'pending',
+      mpesaReceipt: null,
+      resultDesc: 'Waiting for M-Pesa confirmation...',
       orderStatus: payment.orders?.status,
       orderNumber: payment.orders?.order_number,
     });
   } catch (err) {
+    console.error('Status check error:', err);
     res.status(500).json({ error: 'Failed to check payment status' });
   }
 });
