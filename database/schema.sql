@@ -122,6 +122,12 @@ CREATE TABLE payments (
 CREATE INDEX idx_payments_checkout ON payments(checkout_request_id);
 CREATE INDEX idx_payments_order ON payments(order_id);
 
+-- One open payment per order. Drops out of the index once status is terminal,
+-- so a retry after failure/cancellation is allowed.
+CREATE UNIQUE INDEX uniq_payments_open_per_order
+  ON payments(order_id)
+  WHERE status IN ('initiated', 'pending');
+
 -- ── Row Level Security ──
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;

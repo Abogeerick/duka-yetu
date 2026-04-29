@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep *)",
+      "Bash(node --check server/src/routes/mpesa.js)",
+      "Bash(timeout 6 npm run dev)",
+      "Bash(echo \"\\(exit $?\\)\")"
+    ]
+  }
+}

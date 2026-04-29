@@ -25,6 +25,7 @@ export default function Checkout() {
   const [orderTotal, setOrderTotal] = useState(0);
   const [error, setError] = useState('');
   const [step, setStep] = useState('details');
+  const [submitting, setSubmitting] = useState(false);
 
   // Pre-fill form when user data is available
   useEffect(() => {
@@ -63,12 +64,14 @@ export default function Checkout() {
   };
 
   const createOrder = async () => {
+    if (submitting) return;
     setError('');
     if (!form.customer_name || !form.customer_phone || !form.delivery_address) {
       setError('Please fill in all required fields');
       return;
     }
 
+    setSubmitting(true);
     try {
       const { data: order } = await api.post('/orders', {
         ...form,
@@ -89,6 +92,7 @@ export default function Checkout() {
       setStep('payment');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to create order');
+      setSubmitting(false);
     }
   };
 
@@ -179,8 +183,8 @@ export default function Checkout() {
 
           {error && <p style={{ color: 'var(--color-accent)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
 
-          <button className="btn-primary" onClick={createOrder} style={{ marginTop: 8 }}>
-            Continue to Payment — {formatKES(grandTotal)}
+          <button className="btn-primary" onClick={createOrder} disabled={submitting} style={{ marginTop: 8 }}>
+            {submitting ? 'Creating order…' : `Continue to Payment — ${formatKES(grandTotal)}`}
           </button>
         </motion.div>
       )}

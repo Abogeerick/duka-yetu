@@ -190,7 +190,7 @@ export default function MpesaCheckout({ orderId, amount, onSuccess }) {
       <motion.button
         className="btn-primary btn-mpesa"
         onClick={initiatePayment}
-        disabled={status === 'pushing'}
+        disabled={status !== 'idle'}
         whileTap={{ scale: 0.98 }}
       >
         {status === 'pushing' ? 'Sending STK Push...' : `Pay ${formatKES(amount)} via M-Pesa`}
